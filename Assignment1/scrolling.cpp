@@ -15,14 +15,12 @@ void getCursor(int *x, int *y) {
 }
 
 void displayArrow(int x, struct termios &myTerm) {
-    if (x != 1) {
-        cout << "\033[" << x << ";" << 1 << "H";
-        myTerm.c_lflag |= (ICANON | ECHO);
-        tcsetattr(0, TCSANOW, &myTerm);
-        cout << ">>";
-        myTerm.c_lflag &= ~(ICANON | ECHO);
-        tcsetattr(0, TCSANOW, &myTerm);
-    }
+    cout << "\033[" << x << ";" << 1 << "H";
+    myTerm.c_lflag |= (ICANON | ECHO);
+    tcsetattr(0, TCSANOW, &myTerm);
+    cout << ">>";
+    myTerm.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(0, TCSANOW, &myTerm);
 }
 
 void eraseArrowAbove(int x, struct termios &myTerm) {
@@ -54,9 +52,10 @@ int calculateNumOfSteps(string fileName, int max_cols) {
 
 int main() {
     vector<string> fileNames;
-    for (int i = 10; i < 100; i++) {
+    for (int i = 10; i < 10; i++) {
         string res = "   llllllllllllllllllllllllllo0";
         res += to_string(i);
+        res += ".txt";
         fileNames.push_back(res);
     }
     struct winsize myTermSize;
@@ -73,7 +72,7 @@ int main() {
         cout << s << endl;
     }
     // Place the cursor at top most position
-    cout << "\033[1;1H";
+    // cout << "\033[1;1H";
     index = 0;
     while (true) {
         getCursor(&x, &y);
@@ -84,6 +83,8 @@ int main() {
             if (x == 1) {
                 cout << "\033[" << max_rows << ";" << 1 << "H";
                 cout << "Refreshing logic!!!" << endl;
+                myTerm.c_lflag |= (ICANON | ECHO);
+                tcsetattr(0, TCSANOW, &myTerm);
                 return 1;
             }
             getCursor(&x, &y);
@@ -101,6 +102,8 @@ int main() {
             if (x == max_rows) {
                 cout << "\033[" << max_rows << ";" << 1 << "H";
                 cout << "Refreshing logic!!!" << endl;
+                myTerm.c_lflag |= (ICANON | ECHO);
+                tcsetattr(0, TCSANOW, &myTerm);
                 return 1;
             }
             getCursor(&x, &y);

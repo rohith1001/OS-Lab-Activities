@@ -1,9 +1,13 @@
+#include "fileRecord.h"
 #include <algorithm>
 #include <cstring>
 #include <dirent.h>
+#include <grp.h>
 #include <iostream>
 #include <limits.h>
+#include <pwd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
 #include <vector>
@@ -11,10 +15,20 @@
 #define cursorDownward cout << "\033[B"
 using namespace std;
 
-void changeFromCanonical(struct termios &myTerm) {
+void getCursor(int *x, int *y) {
+    cout << "\033[6n";
+    scanf("\033[%d;%dR", x, y);
+}
+
+void setToNonCanonical(struct termios &myTerm) {
     myTerm.c_lflag &= ~(ICANON | ECHO);
-    myTerm.c_cc[VMIN] = 1;
-    myTerm.c_cc[VTIME] = 0;
+    myTerm.c_cc[VMIN] = 1;  // minimum characters for non-canonical read
+    myTerm.c_cc[VTIME] = 0; // timeout in deciseconds for non-canonical read
+    tcsetattr(0, TCSANOW, &myTerm);
+}
+
+void setToCanonical(struct termios &myTerm) {
+    myTerm.c_lflag |= (ICANON | ECHO); // enable canonical mode and echo input characters
     tcsetattr(0, TCSANOW, &myTerm);
 }
 
@@ -31,6 +45,15 @@ string getPermissionsInfo(struct stat &fileInfo) {
     permissions += (perm & S_IWOTH) ? 'w' : '-';
     permissions += (perm & S_IXOTH) ? 'x' : '-';
     return permissions;
+}
+
+void getUserAndGroup(string &userName, string &groupName, struct stat fileInfo) {
+    struct passwd *pw = getpwuid(fileInfo.st_uid);
+    struct group *gr = getgrgid(fileInfo.st_gid);
+    string s1(pw->pw_name); // for user
+    string s2(gr->gr_name); // for group
+    userName = s1;
+    groupName = s2;
 }
 
 int main() {
@@ -70,7 +93,7 @@ int main() {
                 cout << "\n";
             }
         }
-        changeFromCanonical(myTerm);
+        setToNonCanonical(myTerm);
         cout << "\033[1;1H";
         while (true) {
             char ch;

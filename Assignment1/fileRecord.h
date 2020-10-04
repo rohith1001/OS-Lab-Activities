@@ -1,7 +1,8 @@
 #include <string>
 struct filerecord {
-    char *fileName;
+    std::string fileName;
     long long fileSize;
     std::string filePermissions;
     std::string fileLastModifiedTime;
+    long long recordLength;
 };

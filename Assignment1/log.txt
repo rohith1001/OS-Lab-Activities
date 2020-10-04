@@ -1,0 +1,4 @@
+ch is: 
+x is: 1
+index is: 0
+Down case
