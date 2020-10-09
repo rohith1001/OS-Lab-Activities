@@ -27,37 +27,37 @@ void setToCanonical(struct termios &myTerm) {
 
 void moveCursor(int x, int y) { cout << "\033[" << x << ";" << y << "H"; }
 
-void displayArrow(int x, struct termios &myTerm) {
-    moveCursor(x, 1);
-    setToCanonical(myTerm);
-    cout << ">>";
-    setToNonCanonical(myTerm);
-}
+// void displayArrow(int x, struct termios &myTerm) {
+//     moveCursor(x, 1);
+//     setToCanonical(myTerm);
+//     cout << ">>";
+//     setToNonCanonical(myTerm);
+// }
 
-void eraseArrowAbove(int x, struct termios &myTerm) {
-    if (x != 1) {
-        moveCursor(x - 1, 1);
-        setToCanonical(myTerm);
-        cout << "  ";
-        setToNonCanonical(myTerm);
-    }
-}
+// void eraseArrowAbove(int x, struct termios &myTerm) {
+//     if (x != 1) {
+//         moveCursor(x - 1, 1);
+//         setToCanonical(myTerm);
+//         cout << "  ";
+//         setToNonCanonical(myTerm);
+//     }
+// }
 
-void eraseArrow(int x, struct termios &myTerm) {
-    moveCursor(x, 1);
-    setToCanonical(myTerm);
-    cout << "  ";
-    setToNonCanonical(myTerm);
-}
+// void eraseArrow(int x, struct termios &myTerm) {
+//     moveCursor(x, 1);
+//     setToCanonical(myTerm);
+//     cout << "  ";
+//     setToNonCanonical(myTerm);
+// }
 
-void eraseArrowBelow(int x, int numOfSteps, int max_rows, struct termios &myTerm) {
-    if ((x + numOfSteps) < max_rows) {
-        moveCursor(x + 1, 1);
-        setToCanonical(myTerm);
-        cout << "  ";
-        setToNonCanonical(myTerm);
-    }
-}
+// void eraseArrowBelow(int x, int numOfSteps, int max_rows, struct termios &myTerm) {
+//     if ((x + numOfSteps) < max_rows) {
+//         moveCursor(x + 1, 1);
+//         setToCanonical(myTerm);
+//         cout << "  ";
+//         setToNonCanonical(myTerm);
+//     }
+// }
 
 int calculateNumOfSteps(string fileName, int max_cols) {
     int ans = (int)ceil(fileName.size() / max_cols);
@@ -189,5 +189,6 @@ int main() {
         setToCanonical(myTerm);
         cout << "after break x: " << x << "y: " << y;
         mylog.close();
-        return 0;
     }
+    return 0;
+}
