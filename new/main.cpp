@@ -1,5 +1,7 @@
 #include <bits/stdc++.h>
 #include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <fstream>
 #include <grp.h>
 #include <pwd.h>
@@ -48,6 +50,7 @@ void setToNonCanonical();
 void collectAllFilesInDir(string directory);
 string readInCommand();
 void ignoreCharInCommand();
+bool checkIfDir(string directory);
 
 void getCurrentDirectory(char (&myCwd)[PATH_MAX]) {
     if (getcwd(myCwd, sizeof(myCwd)) == NULL) {
@@ -356,8 +359,8 @@ bool leftKey_functionality() {
 }
 
 bool isDirPresent(const std::string &s) {
-    struct stat fileInfo;
-    return ((stat(s.c_str(), &fileInfo) == 0) && S_ISDIR(fileInfo.st_mode));
+    struct stat fileInformation;
+    return ((stat(s.c_str(), &fileInformation) == 0) && S_ISDIR(fileInformation.st_mode));
 }
 
 void goto_functionality() {
@@ -399,12 +402,12 @@ void createDir_functionality() {
     newNormalMode();
 }
 
-void ignoreCharInCommand() {
-    char ch;
-    while (ch != KEY_ENTER) {
-        ch = kbget();
-    }
-}
+// void ignoreCharInCommand() {
+//     char ch;
+//     while (ch != KEY_ENTER) {
+//         ch = kbget();
+//     }
+// }
 
 void readInCommandStrings(vector<string> &vecStr) {
     string str = "";
@@ -419,7 +422,9 @@ void readInCommandStrings(vector<string> &vecStr) {
             cout << " ";
             vecStr.push_back(str);
             str = "";
+            ch1 = '\0';
         } else if (ch1 == 10) { // for enter
+            vecStr.push_back(str);
             return;
         } else if ((int)ch1 == 127) {
             cout << "\b \b";
@@ -462,32 +467,115 @@ string readInCommand() {
 
 void copyRegFile(string source, string destination) {
     cout << "Inside copyRegFile" << endl;
-    char source_arr[source.size() + 1];
-    char destination_arr[destination.size() + 1];
-    strcpy(source_arr, source.c_str());
-    strcpy(destination_arr, destination.c_str());
-    ifstream mySource(source_arr, std::ios::binary);
-    ofstream myDest(destination_arr, std::ios::binary);
-    myDest << mySource.rdbuf();
-    mySource.close();
-    myDest.close();
-}
+    cout << "Source is: " << source << endl;
+    cout << "Destination is " << destination << endl;
+    // char block[1024];
+    // int inFileStatus, outFileStatus;
+    // int status;
+    // inFileStatus = fopen(source.c_str(), O_RDONLY);
+    // cout << "Error in inFile is " << strerror(errno);
+    // cout << inFileStatus << endl;
+    // outFileStatus = fopen(destination.c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+    // cout << "Error in outFile is " << strerror(errno);
+    // cout << outFileStatus << endl;
+    // while ((status = read(inFileStatus, block, sizeof(block))) > 0) {
+    //     write(outFileStatus, block, status);
+    // }
+    ifstream sourceFile(source.c_str(), ios::binary);
+    ofstream destFile(destination.c_str(), ios::binary);
 
-bool checkIfSourceIsDir(string source) { return false; }
+    destFile << sourceFile.rdbuf();
+
+    sourceFile.close();
+    destFile.close();
+
+    return;
+}
 
 bool copy_functionality() {
     vector<string> stringParameters;
     readInCommandStrings(stringParameters);
+    // cout << "hello123 mic testing" << endl;
+    // cout << "size is " << stringParameters.size() << endl;
+    if (stringParameters.size() == 0) {
+        return false;
+    }
     if (stringParameters.size() > 0) {
         int n = stringParameters.size();
         string destination = string(home) + '/' + stringParameters[n - 1] + '/';
         for (int i = 0; i < n - 1; i++) {
             string source = string(home) + '/' + stringParameters[i];
-            copyRegFile(source, destination);
+            destination += stringParameters[i];
+            if (checkIfDir(source)) {
+                cout << "\33[2K";
+                cout << "Recursive copy not implemented" << endl;
+                return false;
+            } else {
+                // cout << "source is: " << source << endl;
+                // cout << "destination is: " << destination << endl;
+                copyRegFile(source, destination);
+            }
         }
         return true;
     }
     return false;
+}
+
+bool checkIfDir(string directory) {
+    struct stat fileStat;
+    char dir_arr[directory.size() + 1];
+    strcpy(dir_arr, directory.c_str());
+    if (stat(dir_arr, &fileStat) != 0) {
+        cout << "Error accessing file stat...Exiting" << endl;
+        return false;
+    }
+    mode_t perm = fileStat.st_mode;
+    return S_ISDIR(perm);
+}
+
+void search_functionality(string fileName, string directory) {
+    struct stat fileStat;
+    int batch_number = 1;
+    char dir_arr[directory.size() + 1];
+    strcpy(dir_arr, directory.c_str());
+    DIR *d;
+    d = opendir(dir_arr);
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+            if (string(dir->d_name) == fileName) {
+                cout << "\33[2K";
+                moveCursor(batch_size + 2, 1);
+                cout << "\33[2K";
+                cout << "True";
+                moveCursor(batch_size + 1, 1);
+                return;
+            }
+            if (checkIfDir(dir->d_name)) {
+                search_functionality(fileName, dir->d_name);
+            }
+        }
+    }
+    cout << "\33[2K";
+    moveCursor(batch_size + 2, 1);
+    cout << "\33[2K";
+    cout << "False";
+    moveCursor(batch_size + 1, 1);
+    return;
+}
+
+void readSearchParameters(string &searchFile) { searchFile = readInCommand(); }
+
+void rename_functionality() {
+    string oldName = readInCommand();
+    string newName = readInCommand();
+    string abs_oldName = string(home) + '/' + oldName;
+    string abs_newName = string(home) + '/' + newName;
+    cout << "abs_oldName: " << abs_oldName << endl;
+    cout << "abs_newName: " << abs_newName << endl;
+    int value = rename(abs_oldName.c_str(), abs_newName.c_str());
+    if (!value) {
+        newNormalMode();
+    }
 }
 
 bool command_mode() {
@@ -508,6 +596,14 @@ bool command_mode() {
         return true;
     } else if (myCommand == "copy") {
         return copy_functionality();
+    } else if (myCommand == "search") {
+        string searchFile;
+        readSearchParameters(searchFile);
+        search_functionality(searchFile, home);
+        return false;
+    } else if (myCommand == "rename") {
+        rename_functionality();
+        return true;
     }
     return false;
 }
